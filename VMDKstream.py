@@ -171,7 +171,7 @@ def debug_print(message):
     #print message
     pass
 
-def convert_to_stream(infilename, outfilename):
+def convert_to_stream(infilename, outfilename), complevel)::
     debug_print("DEBUG: opening %s to write to %s" % (infilename, outfilename))
 
     infileSize = os.path.getsize(infilename)
@@ -251,7 +251,7 @@ def convert_to_stream(infilename, outfilename):
             else:
                 # Create a compressed grain
                 currentGrainTable.append(sector_pointer(outfile))
-		compChunk = zlib.compress(inChunk)
+		compChunk = zlib.compress(inChunk, complevel)
                 grain_marker = create_grain_marker(inputSectorPointer,
                                                    len(compChunk))
 		grainPad, writeSectors = pad_to_sector(len(compChunk) + len(grain_marker))
@@ -313,4 +313,27 @@ def convert_to_stream(infilename, outfilename):
         infile.close()
 
 if __name__ == '__main__':
-    convert_to_stream(sys.argv[1], sys.argv[2])
+    parser = OptionParser()
+    parser.add_option("-i", type = "string",
+                      help = "Input file to convert to stream-optimized VMDK file.",
+                      dest = "infilename")
+    parser.add_option("-o", type = "string",
+                      help = "Output stream-optimized VMDK file.",
+                      dest = "outfilename")
+    parser.add_option("-c", type = "int",
+                      help = "Compression level. Higher is greater but slower. Valid range is 1 to 9. Default value is 1.",
+                      default = 1,
+                      dest = "complevel")
+
+    (options, args) = parser.parse_args()
+    if not options.infilename:
+        parser.print_help()
+        exit(1)
+    if not options.outfilename:
+        parser.print_help()
+        exit(1)
+    if not 1 <= options.complevel <= 9:
+        parser.print_help()
+        exit(1)
+
+    convert_to_stream(options.infilename, options.outfilename, options.complevel)
